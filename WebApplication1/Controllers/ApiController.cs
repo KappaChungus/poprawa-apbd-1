@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Poprawa1.Models;
+using WebApplication1.Exceptions;
 using WebApplication1.Services;
 
 namespace WebApplication1.Controllers;
@@ -26,19 +27,19 @@ public class ApiController : ControllerBase
             await _iDbService.AddArtifact(artifact);
 
         }
-        catch (ArgumentException argEx)
+        catch (Exception e) when (e is ArtifactExistsException || e is ProjectExistsException)
         {
-            return NotFound(argEx.Message);
+            return BadRequest(e.Message);
         }
 
-        catch (InvalidOperationException ioEx)
+        catch (InstitutionDoesntExistException e)
         {
-            return Conflict(ioEx.Message);
+            return NotFound(e.Message);
         }
 
-        catch (Exception ex)
+        catch (Exception e)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, e.Message);
         }
 
         return StatusCode(201, artifact);
@@ -51,17 +52,13 @@ public class ApiController : ControllerBase
             var project = await _iDbService.GetProjectAsync(id);
             return Ok(project);
         }
-        catch (ArgumentException ex)
+        catch (ProjectDoesntExistException e)
         {
-            return NotFound(ex.Message);
+            return NotFound(e.Message);
         }
-        catch (ApplicationException ex)
+        catch (Exception e)
         {
-            return BadRequest(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, e.Message);
         }
     }
 }
